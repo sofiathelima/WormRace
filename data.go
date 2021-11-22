@@ -1,16 +1,16 @@
 package main
 
-type Race struct {
-	trackLength float64
-	athletes    []*Worm
-	startLine   OrderedPair
+type RaceBoard struct {
+	height, width float64
+	trackLength   float64
+	athletes      []*Worm
 }
 
 type Worm struct {
-	genotype          string
-	contractionFactor int
-	body              []*Segment
-	numWavesToFinish  float64
+	genotype string
+	// contractionFactor int
+	body             []*Segment
+	numWavesToFinish float64
 }
 
 type Segment struct {

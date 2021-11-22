@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"gifhelper"
 	"os"
 )
 
@@ -13,22 +15,27 @@ func main() {
 	worms := ReadWormsFromFiles(datafiles)
 	fmt.Println("Data successfully read worms from file")
 
-	startPositions := SetMark(worms)
-	for i, worm := range startPositions.athletes {
-		fmt.Println("i:", i, "worm:", worm)
-	}
+	trackLength := 50.0
 
-	fmt.Println("Congratulations winning genotype: ", WinnerIs(startPositions).genotype)
+	race := BuildRaceTrack(worms, trackLength)
 
-	// WormRace := SimulateRace(worms, startPositions)
-	// fmt.Println(WormRace)
+	fmt.Println("Congratulations winning genotype: ", WinnerIs(race).genotype)
 
-	// var imgWidth int
-	// var animOutputFile string
-	// flag.IntVar(&imgWidth, "width", 500, "Width (and height) of the image to create.")
-	// flag.StringVar(&animOutputFile, "a", "anim.gif", "Animated GIF to write.")
-	// flag.Parse()
+	WormRace := SimulateRace(worms, race)
+	fmt.Println(len(WormRace))
 
-	// 	frames := DrawWorms(WormRace, imgWidth)
-	// 	gifhelper.ImagesToGIF(frames)
+	var imgWidth int
+	var outputFilename string
+	var animOutputFile string
+	flag.IntVar(&imgWidth, "width", 500, "Width (and height) of the image to create.")
+	flag.StringVar(&outputFilename, "o", "out.png", "Name of PNG to output.")
+	flag.StringVar(&animOutputFile, "a", "anim.gif", "Animated GIF to write.")
+	flag.Parse()
+
+	img := WormRace[0].DrawWormsToImage(imgWidth)
+	WriteImageAsPNG(img, outputFilename)
+
+	frames := AnimateRace(WormRace, imgWidth)
+	fmt.Println("len frames:", len(frames))
+	gifhelper.ImagesToGIF(frames, animOutputFile)
 }

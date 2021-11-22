@@ -16,7 +16,6 @@ func (w *Worm) BuildWorm(numSeg int, segLen float64) {
 		if i != 0 {
 			w.body[i].position.y = w.body[i-1].position.y - segLen
 		}
-		fmt.Println("i ", i, "   segLength:", w.body[i].length)
 	}
 }
 
@@ -29,7 +28,7 @@ func StoreData(data []string) *Worm {
 		genotype: data[0],
 		body:     make([]*Segment, numSeg),
 	}
-	fmt.Println(w.body)
+
 	w.BuildWorm(numSeg, segLen)
 
 	return &w
