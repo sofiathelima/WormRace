@@ -1,24 +1,22 @@
 package main
 
-import "fmt"
-
 // BuildRaceTrack returns a Race with track of #length
 // and sets athletes to the list of worms
 // and sets each worm to the same starting y position with SetMark()
 // and sets them at different x posiions (lanes)
-func BuildRaceTrack(w []*Worm, length float64) *RaceBoard {
+func BuildRaceTrack(w []*Worm, trackLength float64) *RaceBoard {
 
 	track := &RaceBoard{
 		height:      float64(len(w)) * 10,
-		width:       length * 1.5,
-		trackLength: length,
+		width:       trackLength * 1.5,
+		trackLength: trackLength,
 		athletes:    w,
 	}
 
 	lanes := float64(len(w) + 1)
 
 	for i, competitor := range w {
-		competitor.SetMark(length * 0.25)
+		competitor.SetMark(trackLength * 0.25)
 		for _, seg := range competitor.body {
 			seg.position.x = float64(i+1) * track.height / lanes
 		}
@@ -48,21 +46,11 @@ func (w *Worm) SetMark(y float64) {
 func WinnerIs(r *RaceBoard) *Worm {
 	winner := r.athletes[0]
 	for i := 1; i < len(r.athletes); i++ {
-		if r.CalculateSpeed(r.athletes[i]) < r.CalculateSpeed(winner) {
-			winner = r.athletes[i+1]
+		if r.athletes[i].body[0].position.y > winner.body[0].position.y {
+			winner = r.athletes[i]
 		}
 	}
 	return winner
-}
-
-// CalculateSpeed calculates speed as the track length
-// divided by the total contracted length of the worm,
-// i.e. the number of full body waves to cross the track
-func (r *RaceBoard) CalculateSpeed(w *Worm) float64 {
-	totalLen := float64(len(w.body)) * w.body[0].length
-	w.numWavesToFinish = r.trackLength / (totalLen * 0.5)
-	// fmt.Println("Num Waves to Finish: ", w.numWavesToFinish)
-	return w.numWavesToFinish
 }
 
 // SimulateRace returns a list of race timepoints
@@ -77,23 +65,12 @@ func SimulateRace(w []*Worm, initialTrack *RaceBoard) []*RaceBoard {
 		nextStep := UpdateRace(timePoints[len(timePoints)-1])
 		winner = WinnerIs(nextStep)
 		timePoints = append(timePoints, nextStep)
-		// fmt.Println("winner head position:", winner.body[0].position.y)
-		// fmt.Println("num Gens:", len(timePoints))
 	}
-
-	fmt.Println()
-
-	// for _, r := range timePoints {
-	// 	for i, w := range r.athletes {
-	// 		fmt.Println("player", i, "start", w.body[0].position.y)
-	// 	}
-	// }
 
 	return timePoints
 }
 
 func (s *Segment) CopySegment() *Segment {
-	// var seg Segment
 	seg := *s
 	return &seg
 }
@@ -101,8 +78,8 @@ func (s *Segment) CopySegment() *Segment {
 func (w *Worm) CopyWorm() *Worm {
 	var wormy Worm
 	wormy.genotype = w.genotype
-	wormy.numWavesToFinish = w.numWavesToFinish
 	wormy.body = make([]*Segment, len(w.body))
+	wormy.contractionFactor = w.contractionFactor
 	for i, seg := range w.body {
 		wormy.body[i] = seg.CopySegment()
 	}
@@ -126,14 +103,7 @@ func (currRace *RaceBoard) CopyRaceBoard() *RaceBoard {
 func UpdateRace(r *RaceBoard) *RaceBoard {
 	nextStep := r.CopyRaceBoard()
 	for _, competitor := range nextStep.athletes {
-		// totalLen := float64(len(competitor.body)) * competitor.body[0].length
-		// fmt.Println("total len", totalLen)
-		// fmt.Println("worm", i, "position,", competitor.body[0].position.y)
-		// fmt.Println("worm", i, "seg length,", competitor.body[0].length)
 		competitor.UpdatePosition()
-		// fmt.Println("worm", i, "new position", competitor.body[0].position.y)
-		// fmt.Println("worm", i, "new seg length,", competitor.body[0].length)
-		// fmt.Println()
 	}
 	return nextStep
 }
@@ -150,7 +120,7 @@ func (w *Worm) UpdatePosition() {
 func (w *Worm) Contract() {
 
 	for _, seg := range w.body {
-		seg.length = seg.length * 0.5
+		seg.length = seg.length * w.contractionFactor
 
 		seg.contracted = true
 	}
@@ -161,14 +131,13 @@ func (w *Worm) Contract() {
 func (w *Worm) Expand() {
 
 	for _, seg := range w.body {
-		seg.length = seg.length * 2
+		seg.length = seg.length / w.contractionFactor
 
 		seg.contracted = false
 	}
 
 	totalLen := float64(len(w.body)) * w.body[0].length
-	// fmt.Println("w.body", len(w.body), "* seg len", w.body[0].length, "total len", totalLen)
-	newPosition := w.body[0].position.y + (totalLen * 0.5)
+	newPosition := w.body[len(w.body)-1].position.y + (totalLen)
 
 	w.SetMark(newPosition)
 

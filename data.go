@@ -7,10 +7,9 @@ type RaceBoard struct {
 }
 
 type Worm struct {
-	genotype string
-	// contractionFactor int
-	body             []*Segment
-	numWavesToFinish float64
+	genotype          string
+	contractionFactor float64 // percentage of body length when contracted
+	body              []*Segment
 }
 
 type Segment struct {

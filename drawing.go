@@ -11,8 +11,10 @@ import (
 )
 
 // AnimateRace creates an image for every step in wormRace.
+// Actually creates 5 images for every step to slow down animation
 // The image size is 3 times the track length
 func AnimateRace(wormRace []*RaceBoard, imgWidth int) []image.Image {
+	// make copies of frames to slow down animation
 	images := make([]image.Image, 0, len(wormRace)*5)
 
 	for _, r := range wormRace {

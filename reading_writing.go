@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
 func (w *Worm) BuildWorm(numSeg int, segLen float64) {
@@ -22,11 +25,12 @@ func (w *Worm) BuildWorm(numSeg int, segLen float64) {
 func StoreData(data []string) *Worm {
 	numSeg, _ := strconv.Atoi(data[1])
 	segLen, _ := strconv.ParseFloat(data[2], 64)
-	// contraction, _ := strconv.Atoi(data[3])
+	contraction, _ := strconv.ParseFloat(data[3], 64)
 
 	w := Worm{
-		genotype: data[0],
-		body:     make([]*Segment, numSeg),
+		genotype:          data[0],
+		body:              make([]*Segment, numSeg),
+		contractionFactor: contraction,
 	}
 
 	w.BuildWorm(numSeg, segLen)
@@ -57,10 +61,35 @@ func ReadWormFromFile(filename string) *Worm {
 	return StoreData(data)
 }
 
-func ReadWormsFromFiles(filenames []string) []*Worm {
-	worms := make([]*Worm, len(filenames))
-	for i, file := range filenames {
-		worms[i] = ReadWormFromFile(file)
+func ReadDataFromExcel(filename string) []*Worm {
+	file, err := excelize.OpenFile(filename)
+	if err != nil {
+		fmt.Println("Error: something went wrong opening the xlsx file.")
+	}
+
+	averageWorms := make([]*Worm, 0)
+
+	// Reach each sheet in xlsx file
+	// Read rows as [][]strings from xlsx file
+	for _, name := range file.GetSheetMap() {
+		data, err := file.GetRows(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		averageWorms = append(averageWorms, Statistics(data)...)
+	}
+
+	return averageWorms
+}
+
+func ReadWormsFromFiles(filetype string, filenames []string) []*Worm {
+	worms := make([]*Worm, 0)
+	for _, file := range filenames {
+		if filetype == "xlsx" {
+			worms = ReadDataFromExcel(file)
+		} else if filetype == "txt" {
+			worms = append(worms, ReadWormFromFile(file))
+		}
 	}
 	return worms
 }
